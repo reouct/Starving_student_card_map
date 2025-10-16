@@ -1,0 +1,24 @@
+{
+  "name": "starving_student_card_map",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/reouct/Starving_student_card_map.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/reouct/Starving_student_card_map/issues"
+  },
+  "homepage": "https://github.com/reouct/Starving_student_card_map#readme",
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}
