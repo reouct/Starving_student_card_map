@@ -1,5 +1,5 @@
 const express = require("express");
-const { dealRouter } = require("./routes/deal.js");
+const dealRouter = require("./routes/deal.js");
 
 const app = express();
 app.use(express.json());
@@ -17,7 +17,6 @@ app.use("/api", apiRouter);
 
 apiRouter.use("/docs", (req, res) => {
   res.json({
-    version: version.version,
     endpoints: [...dealRouter.endpoints],
   });
 });
