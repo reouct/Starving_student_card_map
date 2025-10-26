@@ -1,5 +1,5 @@
 const express = require("express");
-const dealRouter = require("./routes/deal.js");
+const { dealRouter } = require("./routes/deal.js");
 
 const app = express();
 app.use(express.json());

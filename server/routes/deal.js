@@ -1,9 +1,11 @@
 const express = require("express");
 const uuid = require("uuid");
+const { dealDB } = require("../database/deal");
+const deal = require("../database/deal");
 
 const dealRouter = express.Router();
 
-orderRouter.endpoints = [
+dealRouter.endpoints = [
   {
     method: "GET",
     path: "/api/deal",
@@ -13,6 +15,7 @@ orderRouter.endpoints = [
       {
         id: "58a24cf9-0be4-4287-8352-e1612021994d",
         description: "BOGO shakes",
+        numUses: 1,
         store: {
           name: "McDonald's",
           locations: [
@@ -29,12 +32,13 @@ orderRouter.endpoints = [
 
   {
     method: "GET",
-    path: "/api/deal/:dealId",
+    path: "/api/deal/:dealID",
     description: "Get deal by id",
     example: `curl localhost:3000/api/deal/58a24cf9-0be4-4287-8352-e1612021994d`,
     response: {
       id: "58a24cf9-0be4-4287-8352-e1612021994d",
       description: "BOGO shakes",
+      numUses: 1,
       store: {
         name: "McDonald's",
         locations: [
@@ -51,11 +55,14 @@ orderRouter.endpoints = [
     method: "POST",
     path: "/api/deal",
     requiresAuth: true, //- TODO
-    description: "Add new deal",
-    example: `curl -X POST http://localhost:3000/api/deal -H "Content-Type: application/json"  -d '{"description":"BOGO shakes","storeName":"McDonalds","addresses":["1225 S University Ave, Provo, UT 84601"]}'`,
+    description:
+      "Add new deal. Finds coordinates and formatted address when optional addresses are included. Num uses must be a number >0 or *null* for no limit",
+    optionalFields: ["type", "addresses"],
+    example: `curl -X POST http://localhost:3000/api/deal -H "Content-Type: application/json"  -d '{"description":"BOGO shakes","numUses": 1,"type":"Free sutff","storeName":"McDonalds","addresses":["1225 S University Ave, Provo, UT 84601"]}'`,
     response: {
       id: "33407f7e-9a10-43eb-b074-a79a3d5dbab4",
-      dealDescription: "BOGO shakes",
+      description: "BOGO shakes",
+      numUses: 1,
       store: {
         name: "McDonalds",
         locations: [
@@ -71,13 +78,16 @@ orderRouter.endpoints = [
 
   {
     method: "PUT",
-    path: "/api/deal",
+    path: "/api/deal/:dealID",
     requiresAuth: true, //- TODO,
-    description: "Update existing Deal",
-    example: `curl -X POST http://localhost:3000/api/deal/33407f7e-9a10-43eb-b074-a79a3d5dbab4 -H "Content-Type: application/json"  -d '{"description":"BOGO shakes - of equal or lesser value","storeName":"McDonalds","addresses":["1225 S University Ave, Provo, UT 84601","211 W 1230 N, Provo, UT 84604"]}'`,
+    description:
+      "Update existing Deal. Finds coordinates and formatted address for optional field addresses",
+    optionalFields: ["type", "addresses"],
+    example: `curl -X POST http://localhost:3000/api/deal/33407f7e-9a10-43eb-b074-a79a3d5dbab4 -H "Content-Type: application/json"  -d '{"description":"BOGO shakes - of equal or lesser value", "numUses":1, "storeName":"McDonalds","addresses":["1225 S University Ave, Provo, UT 84601","211 W 1230 N, Provo, UT 84604"]}'`,
     response: {
       id: "33407f7e-9a10-43eb-b074-a79a3d5dbab4",
-      dealDescription: "BOGO shakes - of equal or lesser value",
+      description: "BOGO shakes - of equal or lesser value",
+      numUses: 1,
       store: {
         name: "McDonalds",
         locations: [
@@ -95,26 +105,51 @@ orderRouter.endpoints = [
       },
     },
   },
+
+  {
+    method: "DELETE",
+    path: "/api/deal/:dealID",
+    requiresAuth: true, //- TODO,
+    description: "Deletes deal",
+    optionalFields: ["type", "addresses"],
+    example: `curl -X DELETE http://localhost:3000/api/deal/33407f7e-9a10-43eb-b074-a79a3d5dbab4 '`,
+    response: {
+      success: true,
+    },
+  },
 ];
 
 // get singular deal
-dealRouter.get("/:dealID", (req, res) => {
+dealRouter.get("/:dealID", async (req, res) => {
+  const dealID = req.params.dealID;
+
+  const deal = await dealDB.getDeal(dealID);
+
   //TODO CHANGE TO IF DEALID NOT IN DB
-  if (req.params.dealID == 1) {
-    res.status(404).send({ message: "Could not find deal matching dealID" });
+  if (!deal) {
+    res.status(404).send({
+      message: "Could not find deal matching dealID",
+    });
     return;
   }
-  res.send({ message: `NOT IMPLEMENTED. Getting deal ${req.params.dealID}!` });
+  res.send(deal);
 });
 
 //all deals
-dealRouter.get("/", (req, res) => {
-  res.send({ message: "NOT IMPLEMENTED. Getting all deals" });
+dealRouter.get("/", async (req, res) => {
+  const allDeals = await dealDB.getAllDeals();
+
+  res.send(allDeals);
 });
 
 //add new deal
 dealRouter.post("/", async (req, res) => {
-  dealWithCoords = await dealHandler(null, req, res);
+  const dealWithCoords = await dealHandler(null, req, res);
+
+  if (dealWithCoords == -1) {
+    return;
+  }
+  dealDB.createDeal(dealWithCoords);
 
   res.send(dealWithCoords);
 });
@@ -122,71 +157,105 @@ dealRouter.post("/", async (req, res) => {
 //update deal
 dealRouter.put("/:dealID", async (req, res) => {
   //TODO CHANGE TO IF DEALID NOT IN DB
-  if (req.params.dealID == 1) {
+  const idDoesExist = dealDB.getDeal(req.params.dealID);
+
+  if (!idDoesExist) {
     res.status(404).send({ message: "Could not find deal matching dealID" });
     return;
   }
 
   dealWithCoords = await dealHandler(req.params.dealID, req, res);
 
+  if (dealWithCoords == -1) {
+    return;
+  }
+
+  dealDB.updateDeal(dealWithCoords);
+
   res.send(dealWithCoords);
+});
+
+//delete deal
+dealRouter.delete("/:dealID", async (req, res) => {
+  const deleteSuccess = await dealDB.deleteDeal(req.params.dealID);
+  if (deleteSuccess) {
+    res.send({ success: true });
+  } else {
+    res
+      .status(404)
+      .send({ message: "Could not find matching id of deal to delete" });
+  }
 });
 
 async function dealHandler(dealID, req, res) {
   const dealDescription = req.body.description;
   const storeName = req.body.storeName;
   const addresses = req.body.addresses;
+  const numUses = req.body.numUses;
+  const type = req.body.type;
 
-  if (!storeName || !dealDescription || !addresses) {
+  // numUses must be provided (can be null) and if a number it must be > 0
+  if (!storeName || !dealDescription || numUses === undefined) {
     res.status(400).send({
-      message: "Missing Store name, deal description, or addresses",
+      message: "Missing store name, deal description, or numUses",
     });
-    return;
-  }
-
-  if (!Array.isArray(addresses)) {
+    return -1;
+  } else if (
+    !(numUses === null || (typeof numUses === "number" && numUses > 0))
+  ) {
     res.status(400).send({
-      message: "Addresses must be an array ",
+      message: "numUses must be a number > 0 or null for no limit",
     });
-    return;
-  } else if (addresses.length < 1) {
-    res.status(400).send({
-      message:
-        "Address array must contain 1 or more addresses (must be non empty)",
-    });
-    return;
+    return -1;
   }
 
   const locations = [];
 
-  for (let i = 0; i < addresses.length; i++) {
-    const a = addresses[i];
-    const location = await getLocationFromAddress(a);
-    // console.log(location);
-    if (!location) {
-      res.status(500).send({
-        message: `Failed to fetch address location (formatted address and coordinates) from 3rd party API.`,
+  if (!!addresses) {
+    if (!Array.isArray(addresses)) {
+      res.status(400).send({
+        message: "Addresses must be an array ",
       });
-      return;
-    } else if (location == -1) {
-      res.status(500).send({
-        message: `Could not find location (formatted address and coordinates) for one or more addresses`,
+      return -1;
+    } else if (addresses.length < 1) {
+      res.status(400).send({
+        message:
+          "Address array must contain 1 or more addresses (must be non empty)",
       });
-      return;
+      return -1;
     }
 
-    locations.push(location);
-  }
+    for (let i = 0; i < addresses.length; i++) {
+      const a = addresses[i];
+      const location = await getLocationFromAddress(a);
+      // console.log(location);
+      if (!location) {
+        res.status(500).send({
+          message: `Failed to fetch address location (formatted address and coordinates) from 3rd party API.`,
+        });
+        return -1;
+      } else if (location == -1) {
+        res.status(500).send({
+          message: `Could not find location (formatted address and coordinates) for one or more addresses`,
+        });
+        return -1;
+      }
 
+      locations.push(location);
+    }
+  }
   return {
     id: dealID ?? uuid.v4(),
-    dealDescription,
+    description: dealDescription,
+    numUses: numUses,
+    type: type ?? null,
     store: {
       name: storeName,
       locations: locations,
     },
   };
 }
+
 async function getLocationFromAddress(address) {
   const uriEncodedAddress = encodeURIComponent(address);
   const requestOptions = {
