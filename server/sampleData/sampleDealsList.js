@@ -32,16 +32,6 @@ const deals = [
       "496 N 990 W, American Fork, UT 84003",
     ],
   },
-  {
-    type: "Free Stuff",
-    numUses: 1,
-    storeName: "CHOM",
-    description: "FREE! Reg Order of Tater Tots, Fries, or Sweet Potato Fries!",
-    addresses: [
-      "45 W 300 N, Provo, UT 84601",
-      "496 N 990 W, American Fork, UT 84003",
-    ],
-  },
 
   {
     type: "Treats & Drinks",
@@ -147,13 +137,7 @@ const deals = [
     description: "25% OFF! Unlimited 30-Day pass!",
     addresses: ["746 E 820 N, Provo, UT 84606"],
   },
-  {
-    type: "Entertainment",
-    numUses: null,
-    storeName: "Lan King",
-    description: "2-4-1! Hour of Game Time! Up to 4 Players!",
-    addresses: ["746 E 820 N, Provo, UT 84606"],
-  },
+
   {
     type: "Entertainment",
     numUses: 3,
