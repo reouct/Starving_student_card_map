@@ -13,6 +13,16 @@
 
 ### SET UP (Before Running)
 
+- cd into `server`
+
+create `config.js` file with your unique JWTsecret, this can be anything.
+
+```
+module.exports = {
+  jwtSecret: "your-secret-here",
+};
+```
+
 - cd into `server/database`
 
 create `dbConfig.json` file with credentials from MongoDB atlas
@@ -29,6 +39,7 @@ create `dbConfig.json` file with credentials from MongoDB atlas
 ### RUNNING SERVER
 
 - cd into `server`
+- run `npm install`
 - run `node index.js`
 
 To see endpoints for express server GET `http:localhost:3000/api/docs` via Curl or Browser
