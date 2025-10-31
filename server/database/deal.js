@@ -1,13 +1,16 @@
-const { collections } = require("./db");
-
-const dealCollection = collections.dealCollection;
+const { collections, ensureConnection } = require("./db");
 
 async function getDeal(id) {
-  return dealCollection.findOne({ id: id }, { projection: { _id: 0 } });
+  await ensureConnection();
+  return collections.dealCollection.findOne(
+    { id: id },
+    { projection: { _id: 0 } }
+  );
 }
 
 async function updateDeal(deal) {
-  const result = await dealCollection.updateOne(
+  await ensureConnection();
+  const result = await collections.dealCollection.updateOne(
     { id: deal.id },
     { $set: deal }
   );
@@ -15,21 +18,27 @@ async function updateDeal(deal) {
 }
 
 async function getAllDeals() {
-  return await dealCollection.find({}, { projection: { _id: 0 } }).toArray();
+  await ensureConnection();
+  return await collections.dealCollection
+    .find({}, { projection: { _id: 0 } })
+    .toArray();
 }
 
 async function deleteDeal(id) {
-  const result = await dealCollection.deleteOne({ id: id });
+  await ensureConnection();
+  const result = await collections.dealCollection.deleteOne({ id: id });
   // console.log(result);
   return result.deletedCount;
 }
 
-function createDeal(deal) {
-  dealCollection.insertOne(deal);
+async function createDeal(deal) {
+  await ensureConnection();
+  await collections.dealCollection.insertOne(deal);
 }
 
-function createDeals(dealArray) {
-  dealCollection.insertMany(dealArray);
+async function createDeals(dealArray) {
+  await ensureConnection();
+  await collections.dealCollection.insertMany(dealArray);
 }
 
 module.exports = {
