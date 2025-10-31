@@ -1,8 +1,13 @@
 const express = require("express");
 const dealRouter = require("./routes/deal.js");
+const userRouter = require("./routes/user");
+const { authRouter, setAuthUser } = require("./routes/auth");
+const config = require("./config.js");
+const version = { version: "1.0.0" };
 
 const app = express();
 app.use(express.json());
+app.use(setAuthUser);
 
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", req.headers.origin || "*");
@@ -17,15 +22,23 @@ app.use("/api", apiRouter);
 
 apiRouter.use("/docs", (req, res) => {
   res.json({
-    endpoints: [...dealRouter.endpoints],
+    version: version.version,
+    endpoints: [
+      ...authRouter.endpoints,
+      ...userRouter.endpoints,
+      ...dealRouter.endpoints,
+    ],
   });
 });
 
+apiRouter.use("/auth", authRouter);
+apiRouter.use("/user", userRouter);
 apiRouter.use("/deal", dealRouter);
 
 app.get("/", (req, res) => {
   res.json({
     message: "welcome to the Starving student card map!",
+    version: version.version,
   });
 });
 
