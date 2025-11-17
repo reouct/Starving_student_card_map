@@ -4,8 +4,6 @@ const { authRouter } = require("./auth");
 
 const redemptionRouter = express.Router();
 
-redemptionDB.getDealRedemptions();
-
 redemptionRouter.endpoints = [
   {
     method: "POST",
@@ -38,11 +36,9 @@ redemptionRouter.endpoints = [
       "Get a redemption for a specific user and deal (self or admin)",
     example: `curl -X GET localhost:3000/api/redemption/user/uuid/deal/uuid -H 'Authorization: Bearer tttttt'`,
     response: {
-      redemption: {
-        userId: "uuid",
-        dealId: "uuid",
-        numUses: 1,
-      },
+      userId: "uuid",
+      dealId: "uuid",
+      numUses: 1,
     },
   },
   {
@@ -97,7 +93,7 @@ redemptionRouter.post(
           .send({ message: "Missing required param: dealId" });
       }
 
-      let providedUserId = authUser.userId;
+      let providedUserId = authUser.id;
 
       const redemption = await redemptionDB.redeemDeal(providedUserId, dealId);
       if (!redemption) {
@@ -180,7 +176,7 @@ redemptionRouter.get(
           .send({ message: "Missing required param: dealId" });
       }
 
-      const requesterId = authUser.id || authUser.userId;
+      const requesterId = authUser.id;
       // Allow if requesting their own redemption or if admin
       if (requesterId !== userId && !authUser.isRole("admin")) {
         return res.status(403).send({ message: "Unauthorized" });
@@ -191,7 +187,7 @@ redemptionRouter.get(
         return res.status(404).send({ message: "Redemption not found" });
       }
 
-      res.send({ redemption });
+      res.send({ ...redemption });
     } catch (err) {
       res
         .status(500)
@@ -219,7 +215,7 @@ redemptionRouter.get(
       }
 
       const redemptions = await redemptionDB.getDealRedemptions(dealId);
-      res.send({ redemptions });
+      res.send(redemptions);
     } catch (err) {
       res
         .status(500)
@@ -249,7 +245,7 @@ redemptionRouter.get(
       }
 
       const redemptions = await redemptionDB.getUsersRedemptions(userId);
-      res.send({ redemptions });
+      res.send(redemptions);
     } catch (err) {
       res
         .status(500)

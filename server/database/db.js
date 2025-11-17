@@ -21,7 +21,6 @@ const connectionPromise = (async function initializeConnection() {
     redemptionCollection = db.collection("redemption");
     authCollection = db.collection("auth");
 
-    await authCollection.createIndex({ token: 1 }, { unique: true });
     await dealCollection.createIndex(
       { expiresAt: 1 },
       { expireAfterSeconds: 0 }
