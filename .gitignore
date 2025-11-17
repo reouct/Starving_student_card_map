@@ -2,3 +2,11 @@ node_modules/
 dbConfig.json
 config.js
 server/config.js
+
+server/data/chromedriver.exe
+
+frontend/src/assets/ss_orig.html
+
+frontend/src/assets/preview.js
+
+server/data/scraper.py
