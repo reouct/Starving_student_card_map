@@ -3,6 +3,8 @@ const dealRouter = require("./routes/deal.js");
 const userRouter = require("./routes/user");
 const { authRouter, setAuthUser } = require("./routes/auth");
 const config = require("./config.js");
+const redemptionRouter = require("./routes/redemption.js");
+const redemption = require("./database/redemption.js");
 const version = { version: "1.0.0" };
 
 const app = express();
@@ -23,17 +25,20 @@ app.use("/api", apiRouter);
 apiRouter.use("/docs", (req, res) => {
   res.json({
     version: version.version,
-    endpoints: [
-      ...authRouter.endpoints,
-      ...userRouter.endpoints,
-      ...dealRouter.endpoints,
-    ],
+    endpoints: {
+      auth: [...authRouter.endpoints],
+
+      user: [...userRouter.endpoints],
+      deal: [...dealRouter.endpoints],
+      redemption: [...redemption.endpoints],
+    },
   });
 });
 
 apiRouter.use("/auth", authRouter);
 apiRouter.use("/user", userRouter);
 apiRouter.use("/deal", dealRouter);
+apiRouter.use("/redemption", redemptionRouter);
 
 app.get("/", (req, res) => {
   res.json({
