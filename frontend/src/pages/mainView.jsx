@@ -93,16 +93,17 @@ export default function MainView() {
                 numUses: data[i].numUses,
               };
               if (store.locations.length == 0) {
-                deals.push({ ...dealNoLatlng, latlngs: null });
+                deals.push({ ...dealNoLatlng, locations: null });
               } else {
-                const latlngs = [];
+                const locations = [];
                 for (let j = 0; j < store.locations.length; j++) {
-                  latlngs.push([
-                    store.locations[j].lat,
-                    store.locations[j].long,
-                  ]);
+                  locations.push({
+                    lat: store.locations[j].lat,
+                    long: store.locations[j].long,
+                    address: store.locations[j].address 
+                  });
                 }
-                deals.push({ ...dealNoLatlng, latlngs });
+                deals.push({ ...dealNoLatlng, locations });
               }
             }
             // console.log("RESULT FROM FETCH Setting reformatted deals");
@@ -131,10 +132,11 @@ export default function MainView() {
     let markerCounter = 1;
 
     const markers = filteredDeals.flatMap((deal) =>
-      (deal.latlngs ?? []).map((latlng) => ({
+      (deal.locations ?? []).map((loc) => ({
         ...deal,
         markerId: markerCounter++,
-        latlng, // single coordinate pair
+        latlng: [loc.lat, loc.long], 
+        address: loc.address 
       }))
     );
 
@@ -166,18 +168,14 @@ export default function MainView() {
         }}
       >
         <div style={{ flex: 1, position: "relative" }}>
-          {/* Passed props to MapView */}
           <MapView
             markers={getMarkers(deals)}
             onMarkerClick={setSelected}
+            selectedItem={selected} // Pass the selected item to MapView
             height={isMobile ? "100%" : "80vh"}
             userRedemptions={userRedemptions}
             onRedeem={handleRedeem}
-          >
-            {/* The absolute overlay box is removed/optional since we use Popups now, 
-                but keeping logic if you want dual display */}
-          </MapView>
-          
+          />
           {isMobile && (
             <button
               onClick={() => setShowDeals(!showDeals)}
@@ -200,8 +198,6 @@ export default function MainView() {
             </button>
           )}
         </div>
-        
-        {/* Passed props to RestaurantList */}
         <RestaurantList
           items={deals.filter(
             (r) =>
