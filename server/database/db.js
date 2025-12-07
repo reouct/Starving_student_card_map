@@ -1,7 +1,16 @@
 const { MongoClient } = require("mongodb");
-const config = require("./dbConfig.json");
+let config = {};
 
-const url = `mongodb+srv://${config.userName}:${config.password}@${config.hostname}` ;
+try {
+  config = require("./dbConfig.json");
+} catch (e) {
+}
+
+const userName = config.userName || process.env.MONGOUSER;
+const password = config.password || process.env.MONGOPASSWORD;
+const hostname = config.hostname || process.env.MONGOHOSTNAME;
+
+const url = `mongodb+srv://${userName}:${password}@${hostname}`;
 
 const client = new MongoClient(url);
 let db;
