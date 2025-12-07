@@ -10,6 +10,19 @@ export function setToken(token) {
   }
 }
 
+// NEW: Helper functions for User ID
+export function getUserId() {
+  return localStorage.getItem("ssc_user_id") || null;
+}
+
+export function setUserId(id) {
+  if (id) {
+    localStorage.setItem("ssc_user_id", id);
+  } else {
+    localStorage.removeItem("ssc_user_id");
+  }
+}
+
 export function isLoggedIn() {
   return Boolean(getToken());
 }
@@ -45,6 +58,7 @@ export async function logout() {
     // ignore network errors on logout
   }
   setToken(null);
+  setUserId(null); // Clear user ID on logout
 }
 
 export function authHeaders(extra = {}) {
