@@ -4,7 +4,7 @@ import RestaurantList from "../components/RestaurantList";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import Chatbot from "../components/Chatbot";
-// import { latLng } from "leaflet";
+import { authHeaders, isLoggedIn, getUserId } from "../utils/auth";
 
 // ```
 // sample front end deal {
@@ -19,6 +19,7 @@ export default function MainView() {
   const [selected, setSelected] = useState(null);
   const [query, setQuery] = useState("");
   const [deals, setDeals] = useState([]);
+  const [userRedemptions, setUserRedemptions] = useState({});
   const hasFetched = useRef(false);
 
   // Mobile responsiveness
@@ -30,6 +31,47 @@ export default function MainView() {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  function fetchRedemptions() {
+    if (!isLoggedIn()) return;
+    const userId = getUserId();
+    if (!userId) return;
+
+    fetch(`http://localhost:3000/api/redemption/user/${userId}`, {
+      headers: authHeaders(),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        const list = Array.isArray(data) ? data : data.redemptions || [];
+        const map = {};
+        list.forEach((r) => {
+          map[r.dealId] = r.numUses;
+        });
+        setUserRedemptions(map);
+      })
+      .catch((err) => console.error("Error fetching redemptions:", err));
+  }
+
+  function handleRedeem(dealId) {
+    if (!isLoggedIn()) {
+      alert("Please log in to redeem deals.");
+      return;
+    }
+    
+    fetch(`http://localhost:3000/api/redemption/${dealId}/redeem`, {
+      method: "POST",
+      headers: authHeaders(),
+    })
+      .then(async (res) => {
+        const data = await res.json();
+        if (res.ok) {
+          fetchRedemptions(); // Refresh state for both Map and List
+        } else {
+          alert(data.message || "Redemption failed");
+        }
+      })
+      .catch((err) => console.error("Redemption error:", err));
+  }
 
   function fetchDeals() {
     if (hasFetched.current) return;
@@ -76,6 +118,7 @@ export default function MainView() {
 
   useEffect(() => {
     fetchDeals();
+    fetchRedemptions();
   }, []);
 
   function getMarkers(deals) {
@@ -123,28 +166,18 @@ export default function MainView() {
         }}
       >
         <div style={{ flex: 1, position: "relative" }}>
+          {/* Passed props to MapView */}
           <MapView
             markers={getMarkers(deals)}
             onMarkerClick={setSelected}
             height={isMobile ? "100%" : "80vh"}
+            userRedemptions={userRedemptions}
+            onRedeem={handleRedeem}
           >
-            {selected && (
-              <div
-                style={{
-                  position: "absolute",
-                  right: 40,
-                  top: 40,
-                  background: "#fff",
-                  padding: 8,
-                  borderRadius: 6,
-                  boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
-                }}
-              >
-                <strong>{selected.name}</strong>
-                <div style={{ fontSize: 12 }}>{selected.deal}</div>
-              </div>
-            )}
+            {/* The absolute overlay box is removed/optional since we use Popups now, 
+                but keeping logic if you want dual display */}
           </MapView>
+          
           {isMobile && (
             <button
               onClick={() => setShowDeals(!showDeals)}
@@ -167,12 +200,16 @@ export default function MainView() {
             </button>
           )}
         </div>
+        
+        {/* Passed props to RestaurantList */}
         <RestaurantList
           items={deals.filter(
             (r) =>
               r.name.toLowerCase().includes(query.toLowerCase()) ||
               r.deal.toLowerCase().includes(query.toLowerCase())
           )}
+          userRedemptions={userRedemptions}
+          onRedeem={handleRedeem}
           onSelect={(item) => {
             setSelected(item);
             if (isMobile) setShowDeals(false);

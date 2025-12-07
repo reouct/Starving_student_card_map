@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import { setToken } from "../utils/auth";
+import { setToken, setUserId } from "../utils/auth";
 
 export default function Login() {
   const [username, setUsername] = useState("");
@@ -33,6 +33,11 @@ export default function Login() {
       }
       // success
       setToken(data.token);
+      
+      if (data.user && data.user.id) {
+        setUserId(data.user.id);
+      }
+
       navigate("/");
     } catch (err) {
       setError(err.message);
