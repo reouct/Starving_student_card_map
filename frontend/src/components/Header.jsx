@@ -104,9 +104,11 @@ export default function Header({ onSearch, isMobile, onToggleDeals }) {
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <div style={{ fontWeight: 700, fontSize: 18 }}>
-          Starving Student Map
-        </div>
+        <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
+          <div style={{ fontWeight: 700, fontSize: 18 }}>
+            Starving Student Map
+          </div>
+        </Link>
         {!isMobile && (
           <div style={{ color: "#666", fontSize: 13 }}>
             Digital version of your Starving Student Card
